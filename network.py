@@ -26,6 +26,8 @@ class Network:
         file.write( "                   nLayers: " + str( self.nLayers ) + "\n" )
         file.write( "                   nNeurons: " + str( self.nNeurons ) + "\n\n" )
 
+
+
         for nLayer in range( len( self.layers ) ):
             file.write( "Layer " + misc.pad( nLayer, len( self.layers ) - 1 ) + ": Weights: " + str( self.layers[ nLayer ][ "weights" ][ 0 ][ 0 ] ) + "\n" )
             for nNeuron in range( len( self.layers[ nLayer ][ "weights" ] ) ):
@@ -40,10 +42,10 @@ class Network:
             file.write( " " * ( 8 + len( misc.pad( nLayer, len( self.layers ) - 1 ) ) ) + "Activation: " + self.layers[ nLayer ][ "activation" ] + "\n\n" )
 
     def __init__( self, nInputs, nOutputs, nLayers, nNeurons, verbose = False ):
-        self.nInputs = nInputs
-        self.nOutputs = nOutputs
-        self.nLayers = nLayers
-        self.nNeurons = nNeurons
+        self.structure = { "nInputs" : nInputs,
+                           "nOutputs" : nOutputs,
+                           "nLayers" : nLayers,
+                           "nNeurons" : nNeurons }
 
         # Make layers weights, biases, and activations
         self.layers = []
@@ -55,15 +57,9 @@ class Network:
         else:
             self.layers.append( self.__makeLayer( nInputs = nInputs, nNeurons = nOutputs, activationType = "softmax", verbose = verbose ) )
 
-    def save( self, name, dir ):
-        # Make/open network save file
-        curDir = os.getcwd()
-        os.chdir( dir )
-        file = open( name + ".csv", "w" )
-        os.chdir( curDir )
-
-        # Save layers to network
-        self.__saveNetwork( file )
+    def save( self, name, dir ):        
+        with open( dir + name + ".json", "w" ) as file:
+            json.dump( { "structure" : self.structure, "layers" : self.layers }, file, indent = 4 )
 
     def __step_forward( self, inputs, nLayer ):
         outputs = []

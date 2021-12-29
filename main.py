@@ -13,8 +13,8 @@ del inputs_classifications[ 1: ]
 del inputs_oneHot[ 1: ]
 
 # Make network
-network = code_network.Network( nInputs = len( inputs[ 0 ] ), nOutputs = 3, nLayers = 3, nNeurons = 4, verbose = False ]
-network.save( name = "Protein_Powder_Containers_Neural_Network", dir = "/Users/noaheverett/Documents/Codes/Neural Network/" )
+network = code_network.Network( nInputs = len( inputs[ 0 ] ), nOutputs = 3, nLayers = 3, nNeurons = 4, verbose = False )
+network.save( name = "Protein_Powder_Containers_Neural_Network", dir = "/Users/noaheverett/Documents/Codes/Neural_Network/" )
 
 # nRuns = 1
 # for nRun in range( nRuns ):
