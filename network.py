@@ -2,7 +2,7 @@ from numpy.random import default_rng
 from math import e
 import json
 
-rng = default_rng( 0 )
+rng = default_rng( 1 )
 
 class Network:
     def __makeLayer( self, nInputs, nNeurons, activationType, verbose = False ):
@@ -39,9 +39,6 @@ class Network:
                 self.structure = network[ "structure" ]
                 self.layers = network[ "layers" ]
 
-                print( self.structure )
-                print( self.layers )
-
     def save( self, name, dir = None ):
         if dir == None:
             dir = name
@@ -77,21 +74,35 @@ class Network:
 
         return outputs
 
-    def __step_backward( self, input ):
+    def __step_backward( self, nLayer, inputs ):
+        if nLayer > 0:
+            inputs = self.__step_forward( inputs, 0 )
+            for nLayer_temp in range( 1, nLayer ):
+                inputs = self.__step_forward( inputs, nLayer_temp )
+ 
         dWeights = []
-        for nNeuron in range( len( self.weights ) ):
+        for nNeuron in range( len( self.layers[ nLayer ][ "weights" ] ) ):
             dWeights.append( [] )
-            for input, weight in zip( input, self.weights[ nNeuron ] ):
-                if self.activation == "relu": 
+            print( inputs )
+            print( self.layers[ nLayer ][ "weights" ][ nNeuron ] )
+            for input, weight in zip( inputs, self.layers[ nLayer ][ "weights" ][ nNeuron ] ):
+                if self.layers[ nLayer ][ "activation" ] == "relu": 
                     if input > 0: activationDerivative = 1
                     else: activationDerivative = 0
                     dWeights[ nNeuron ].append( activationDerivative * input * weight )
-                # elif self.activation == "softmax":
+                else:
+                    if input > 0: activationDerivative = 1
+                    else: activationDerivative = 0
+                    dWeights[ nNeuron ].append( activationDerivative * input * weight )
+        
+        return dWeights
 
     def __updateWeights( self, dWeights, nLayer ):
-        for nNeuron in range( len( self.weights ) ):
-            for nWeight in range( len( self.weights[ 0 ] ) ):
-                self.layers[ nLayer ][ nNeuron ][ nWeight ] += dWeights[ nNeuron ][ nWeight ]
+        for nNeuron in range( len( self.layers[ nLayer ][ "weights" ] ) ):
+            for nWeight in range( len( self.layers[ nLayer ][ "weights" ][ nNeuron ] ) ):
+                # print( self.layers[ nLayer ][ "weights" ][ nNeuron ][ nWeight ] )
+                # print( dWeights[ nNeuron ][ nWeight ] )
+                self.layers[ nLayer ][ "weights" ][ nNeuron ][ nWeight ] += dWeights[ nNeuron ][ nWeight ]
 
     def __updateBiases( self, dBiases, nLayer ):
         for nBias in range( len( self.biases ) ):
@@ -105,10 +116,11 @@ class Network:
 
         return output
 
-    def backward( self, layers, inputData, inputData_oneHot ):
-        for nLayer in range( len( layers ), 0, -1 ):
-            layers[ nLayer ].backward( inputData )
-            layers[ nLayer ].updateWeights( layers[ nLayer ].dWeights ) 
+    def backward( self, input, input_oneHot ):
+        for nLayer in range( len( self.layers ) - 1, -1, -1 ):
+            dWeights = self.__step_backward( nLayer, input )
+            self.__updateWeights( dWeights, nLayer ) 
+            # print( "\n", dWeights)
 
 def backwardPropagation( layers, inputData, inputData_oneHot ):
     for nLayer in range( len( layers ), 0, -1 ):
