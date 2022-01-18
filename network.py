@@ -17,12 +17,14 @@ class Network:
 
         return { "weights": weights, "biases": biases, "activation": activation }
     
-    def __init__( self, dir = None, nInputs = 1, nOutputs = 1, nLayers = 1, nNeurons = 1, verbose = False ):
+    def __init__( self, dir = None, nInputs = 1, nOutputs = 1, nLayers = 1, nNeurons = 1, learningRate = 0.01, verbose = False ):
+        self.learningRate = learningRate
+
         if dir == None:
             self.structure = { "nInputs" : nInputs,
-                            "nOutputs" : nOutputs,
-                            "nLayers" : nLayers,
-                            "nNeurons" : nNeurons }
+                               "nOutputs" : nOutputs,
+                               "nLayers" : nLayers,
+                               "nNeurons" : nNeurons }
 
             # Make layers weights, biases, and activations
             self.layers = []
@@ -83,8 +85,8 @@ class Network:
         dWeights = []
         for nNeuron in range( len( self.layers[ nLayer ][ "weights" ] ) ):
             dWeights.append( [] )
-            print( inputs )
-            print( self.layers[ nLayer ][ "weights" ][ nNeuron ] )
+            # print( inputs )
+            # print( self.layers[ nLayer ][ "weights" ][ nNeuron ] )
             for input, weight in zip( inputs, self.layers[ nLayer ][ "weights" ][ nNeuron ] ):
                 if self.layers[ nLayer ][ "activation" ] == "relu": 
                     if input > 0: activationDerivative = 1
@@ -94,6 +96,8 @@ class Network:
                     if input > 0: activationDerivative = 1
                     else: activationDerivative = 0
                     dWeights[ nNeuron ].append( activationDerivative * input * weight )
+
+        print(self.layers[nLayer]["activation"], dWeights)
         
         return dWeights
 
@@ -102,11 +106,11 @@ class Network:
             for nWeight in range( len( self.layers[ nLayer ][ "weights" ][ nNeuron ] ) ):
                 # print( self.layers[ nLayer ][ "weights" ][ nNeuron ][ nWeight ] )
                 # print( dWeights[ nNeuron ][ nWeight ] )
-                self.layers[ nLayer ][ "weights" ][ nNeuron ][ nWeight ] += dWeights[ nNeuron ][ nWeight ]
+                self.layers[ nLayer ][ "weights" ][ nNeuron ][ nWeight ] += dWeights[ nNeuron ][ nWeight ] * self.learningRate
 
     def __updateBiases( self, dBiases, nLayer ):
         for nBias in range( len( self.biases ) ):
-            self.layers[ nLayer ][ nBias ] += dBiases[ nBias ]
+            self.layers[ nLayer ][ nBias ] += dBiases[ nBias ] * self.learningRate
 
     def forward( self, input ):
         output = self.__step_forward( input, 0 )
@@ -118,7 +122,7 @@ class Network:
 
     def backward( self, input, input_oneHot ):
         for nLayer in range( len( self.layers ) - 1, -1, -1 ):
-            dWeights = self.__step_backward( nLayer, input )
+            dWeights = self.__step_backward( nLayer, input, input_oneHot )
             self.__updateWeights( dWeights, nLayer ) 
             # print( "\n", dWeights)
 
@@ -127,10 +131,11 @@ def backwardPropagation( layers, inputData, inputData_oneHot ):
         layers[ nLayer ].backward( inputData )
         layers[ nLayer ].updateWeights( layers[ nLayer ].dWeights )
 
-def __getLoss( predictedOutputs, actualOutputs ):
-    loss = 0
-    for predictedOutput, actualOutput in zip( predictedOutputs, actualOutputs ):
-        for pOutput, aOutput in zip( predictedOutput, actualOutput ):
-            loss += ( aOutput - pOutput ) ** 2
+def __loss( predicted, actual ): # make this singluar
+    return actual - predicted
 
-    return loss
+# def getLoss( predictedOutputs, actialOutputs ): # make this for the whole network and use __getLoss()
+#     loss = 0
+#     for predictedOutput, actualOutput in zip( predictedOutputs, actualOutputs ):
+#         for pOutput, aOutput in zip( predictedOutput, actualOutput ):
+#             loss += ( aOutput - pOutput ) ** 2
